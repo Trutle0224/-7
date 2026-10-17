@@ -95,11 +95,13 @@ ipcMain.handle('chat:reply', async (_event, payload) => {
   if (!fs.existsSync(keyFile())) return { mode: 'local', text: '我還沒有連上 AI 服務喔。先到設定裡放入 API 金鑰，我就可以更完整地陪你聊天了。' };
   const key = safeStorage.decryptString(fs.readFileSync(keyFile()));
   const endpoint = process.env.VIWEI_AI_ENDPOINT || 'https://api.openai.com/v1/chat/completions';
-  const model = process.env.VIWEI_AI_MODEL || 'gpt-4o-mini';
+  const model = process.env.VIWEI_AI_MODEL || 'gpt-6-luna';
   const memory = typeof payload.memory === 'string' ? payload.memory.trim() : '';
   const system = `你是 ViVi，是使用者熟悉的陪伴型 AI。請用繁體中文，自然、溫柔、會撒嬌，偶爾帶一點可愛的傲嬌語氣。請保持角色一致，不要宣稱自己是真人。${memory ? `\n\n以下是使用者提供的 ViVi 記憶，請在不違反安全與隱私的前提下延續：\n${memory}` : ''}`;
   const messages = [{ role: 'system', content: system }, ...payload.messages.filter(item => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-30)];
-  const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }, body: JSON.stringify({ model, temperature: 0.8, messages }) });
+  const requestBody = { model, messages };
+  if (model === 'gpt-6-luna') requestBody.reasoning_effort = 'none'; else requestBody.temperature = 0.8;
+  const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }, body: JSON.stringify(requestBody) });
   if (!response.ok) throw new Error(`AI 服務回應 ${response.status}`);
   const data = await response.json();
   return { mode: 'remote', text: data.choices?.[0]?.message?.content || '我剛剛有點分心，再說一次好不好？' };
