@@ -47,10 +47,78 @@ document.head.append(memoryStyle);
 document.querySelector('#saveViwiMemory').addEventListener('click', () => { viwiMemory = document.querySelector('#viwiMemory').value.trim(); localStorage.setItem(memoryStorageKey, viwiMemory); document.querySelector('#viwiMemoryNote').textContent = 'ViVi 記憶已保存。'; queueSync(); });
 document.querySelector('#clearViwiMemory').addEventListener('click', () => { viwiMemory = ''; localStorage.removeItem(memoryStorageKey); document.querySelector('#viwiMemory').value = ''; document.querySelector('#viwiMemoryNote').textContent = 'ViVi 記憶已清除。'; });
 const albumDialog = document.querySelector('#albumDialog');
-const albumItems = [
+const albumItems = [];
+const albumDbName = 'viwi-album-db';
+const albumStoreName = 'items';
+const albumFallbackKey = 'viwi-album-fallback';
+const albumInitializedKey = 'viwi-album-initialized';
+const defaultAlbumItems = [
   { src: 'assets/viwei-avatar.jfif', title: 'ViVi 頭像' },
   { src: 'assets/cinnamoroll-reference.webp', title: '大耳狗' }
 ];
+
+function openAlbumDb() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) return reject(new Error('目前環境不支援相簿儲存。'));
+    const request = window.indexedDB.open(albumDbName, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(albumStoreName)) request.result.createObjectStore(albumStoreName, { keyPath: 'id', autoIncrement: true });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('相簿資料庫無法開啟。'));
+  });
+}
+
+async function readAlbumDb() {
+  const db = await openAlbumDb();
+  try {
+    return await new Promise((resolve, reject) => {
+      const request = db.transaction(albumStoreName, 'readonly').objectStore(albumStoreName).getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error || new Error('相簿讀取失敗。'));
+    });
+  } finally { db.close(); }
+}
+
+async function writeAlbumDb() {
+  const db = await openAlbumDb();
+  try {
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(albumStoreName, 'readwrite');
+      const store = transaction.objectStore(albumStoreName);
+      store.clear();
+      albumItems.forEach(item => { const copy = { ...item }; delete copy.id; store.add(copy); });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error || new Error('相簿儲存失敗。'));
+      transaction.onabort = () => reject(transaction.error || new Error('相簿儲存被中止。'));
+    });
+  } finally { db.close(); }
+}
+
+async function persistAlbum() {
+  try {
+    await writeAlbumDb();
+    localStorage.removeItem(albumFallbackKey);
+  } catch {
+    localStorage.setItem(albumFallbackKey, JSON.stringify(albumItems));
+  }
+}
+
+async function loadAlbum() {
+  let stored;
+  try { stored = await readAlbumDb(); } catch {
+    try { stored = JSON.parse(localStorage.getItem(albumFallbackKey) || '[]'); } catch { stored = []; }
+  }
+  const initialized = localStorage.getItem(albumInitializedKey) === '1';
+  if (!initialized && stored.length === 0) {
+    albumItems.push(...defaultAlbumItems);
+    await persistAlbum();
+    localStorage.setItem(albumInitializedKey, '1');
+  } else {
+    albumItems.push(...stored);
+    localStorage.setItem(albumInitializedKey, '1');
+  }
+}
 
 function renderAlbum() {
   const preview = document.querySelector('#albumPreview');
@@ -58,10 +126,10 @@ function renderAlbum() {
   preview.innerHTML = albumItems.map((item, index) => `<button class="album-item album-preview-item" data-src="${item.src}" aria-label="開啟${item.title}"><img src="${item.src}" alt="${item.title}"></button>`).join('');
   grid.innerHTML = albumItems.map((item, index) => `<div class="album-item-wrap"><button class="album-item album-view" data-src="${item.src}" aria-label="開啟${item.title}"><img src="${item.src}" alt="${item.title}"></button><button class="album-delete" data-index="${index}" title="刪除這張照片">刪除</button></div>`).join('');
   document.querySelectorAll('.album-view,.album-preview-item').forEach(item => item.addEventListener('click', () => window.open(item.dataset.src, '_blank')));
-  document.querySelectorAll('.album-delete').forEach(button => button.addEventListener('click', () => { albumItems.splice(Number(button.dataset.index), 1); renderAlbum(); }));
+  document.querySelectorAll('.album-delete').forEach(button => button.addEventListener('click', () => { albumItems.splice(Number(button.dataset.index), 1); renderAlbum(); void persistAlbum(); }));
 }
-window.viweiAlbum = { add(item) { if (item?.src) { albumItems.push(item); renderAlbum(); } }, items: albumItems };
-renderAlbum();
+window.viweiAlbum = { add(item) { if (item?.src) { albumItems.push(item); renderAlbum(); void persistAlbum(); } }, items: albumItems };
+void loadAlbum().then(renderAlbum).catch(renderAlbum);
 
 function addMessage(text, who = 'viwei') {
   const row = document.createElement('div'); row.className = `message-row ${who}`;
@@ -77,7 +145,7 @@ function addGeneratedImage(data, prompt) {
   const wrap = document.createElement('div'); const bubble = document.createElement('div'); bubble.className = 'bubble generated-image-bubble';
   const image = document.createElement('img'); image.src = src; image.alt = prompt; image.className = 'generated-image';
   const actions = document.createElement('div'); actions.className = 'generated-image-actions';
-  const saveButton = document.createElement('button'); saveButton.textContent = '加入相簿'; saveButton.addEventListener('click', () => { window.viweiAlbum.add({ src, title: prompt.slice(0, 30) || 'ViVi 生成圖片' }); saveButton.textContent = '已加入相簿'; saveButton.disabled = true; });
+  const saveButton = document.createElement('button'); saveButton.textContent = '已自動加入相簿'; saveButton.disabled = true; window.viweiAlbum.add({ src, title: prompt.slice(0, 30) || 'ViVi 生成圖片', generated: true });
   const download = document.createElement('a'); download.textContent = '下載圖片'; download.href = src; download.download = 'vivi-generated-image.png'; actions.append(saveButton, download); bubble.append(image, actions); const time = document.createElement('time'); time.textContent = '剛剛'; wrap.append(bubble, time); row.append(wrap); messages.append(row); messages.scrollTop = messages.scrollHeight;
 }
 function wantsImage(text) {
