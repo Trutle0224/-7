@@ -35,7 +35,9 @@
 
 在聊天中直接說「幫我畫一張夜晚星空下的大耳狗」或「生成一張粉藍色雙魚座桌布」，ViVi 會使用 OpenAI `gpt-image-1` 生成 1024×1024 PNG。桌面版使用安全儲存的 OpenAI API Key；Render 網頁版使用伺服器端的 `OPENAI_API_KEY`。生成後可預覽、下載或加入相簿。圖片生成會另外消耗 API 額度。
 
-生成前可點輸入框旁的 🖼️ 選擇 PNG、JPG 或 WebP 參考圖，再用對話描述要改成的畫面；參考圖限制 8MB，會送到圖片編輯 API 生成當次結果。
+生成前可點輸入框旁的 🖼️ 選擇 PNG、JPG 或 WebP 參考圖，再用對話描述要改成的畫面；參考圖限制 8MB，會送到圖片編輯 API 生成當次結果。成功生成的圖片會自動加入相簿。
+
+相簿會使用瀏覽器／Electron 的 IndexedDB 保存內容，刪除照片後重新開啟仍會維持刪除狀態；首次使用只會自動放入內建素材，不會在之後重新補回使用者刪除的照片。Electron 桌面版使用固定本機網址，確保每次重開都讀取同一個相簿資料庫。相簿目前是各裝置本機保存，尚未納入聊天同步資料。
 
 ## YouTube 搜尋設定
 
@@ -65,6 +67,7 @@ YouTube 搜尋使用官方 YouTube Data API v3 的 `search.list`。請在 Google
 - 聊天輸入框調整為約 5–6 行文字高度，並保留內部滾動。
 - 新增 iPhone Safari PWA 基礎與手機版介面；iPhone 可透過 Safari「加入主畫面」使用，未製作 Android 版本。
 - 新增網頁版 Node 後端：`npm.cmd run web` 可在瀏覽器使用 AI 與 YouTube 搜尋；伺服器環境變數使用 `OPENAI_API_KEY`、`YOUTUBE_API_KEY`，不暴露在手機前端。
+- 相簿改為 IndexedDB 持久化保存；刪除會在重開後保留，AI 生成圖片成功後會自動加入相簿。
 
 ## iPhone 私人版下一步
 
