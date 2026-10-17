@@ -7,6 +7,7 @@ const keyFile = () => path.join(app.getPath('userData'), 'viwei-api-key.bin');
 const youtubeKeyFile = () => path.join(app.getPath('userData'), 'viwei-youtube-key.bin');
 let localServer;
 let localOrigin;
+const localPort = 41737;
 
 function startLocalServer() {
   return new Promise((resolve, reject) => {
@@ -24,7 +25,7 @@ function startLocalServer() {
       } catch { response.writeHead(404); response.end('Not found'); }
     });
     localServer.on('error', reject);
-    localServer.listen(0, '127.0.0.1', () => { const address = localServer.address(); localOrigin = `http://127.0.0.1:${address.port}`; resolve(localOrigin); });
+    localServer.listen(localPort, '127.0.0.1', () => { localOrigin = `http://127.0.0.1:${localPort}`; resolve(localOrigin); });
   });
 }
 
