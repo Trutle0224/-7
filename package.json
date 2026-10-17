@@ -1,0 +1,25 @@
+{
+  "name": "viwei-chat-app",
+  "version": "1.7.0",
+  "description": "怕恰狗小窩：可在瀏覽器或 Electron 中執行的桌面聊天原型",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "web": "node server.cjs",
+    "dev": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "build": {
+    "appId": "com.viwei.chat",
+    "productName": "怕恰狗小窩",
+    "files": ["index.html", "*.js", "*.css", "*.json", "server.cjs", "electron/**/*", "assets/**/*", "README.md"],
+    "win": { "target": "nsis" }
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}

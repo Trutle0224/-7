@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <rect width="1920" height="1080" fill="#b9dcf6"/>
+  <g fill="#fffdf9" opacity=".92">
+    <path d="M100 170c55-54 148-45 185 14 31 49-3 95-63 92-48-2-98 14-142 38-31-41-18-102 20-144Z"/>
+    <path d="M1540 150c55-54 148-45 185 14 31 49-3 95-63 92-48-2-98 14-142 38-31-41-18-102 20-144Z"/>
+    <path d="M790 820c55-54 148-45 185 14 31 49-3 95-63 92-48-2-98 14-142 38-31-41-18-102 20-144Z"/>
+  </g>
+  <g opacity=".97">
+    <image xlink:href="cinnamoroll-reference.webp" x="-120" y="125" width="720" height="405" preserveAspectRatio="xMidYMid meet"/>
+    <image xlink:href="cinnamoroll-reference.webp" x="610" y="25" width="700" height="394" preserveAspectRatio="xMidYMid meet"/>
+    <image xlink:href="cinnamoroll-reference.webp" x="1325" y="330" width="700" height="394" preserveAspectRatio="xMidYMid meet"/>
+    <image xlink:href="cinnamoroll-reference.webp" x="250" y="700" width="650" height="366" preserveAspectRatio="xMidYMid meet"/>
+    <image xlink:href="cinnamoroll-reference.webp" x="1010" y="710" width="630" height="355" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g fill="none" stroke="#fffdf9" stroke-width="12" stroke-linecap="round" opacity=".8">
+    <path d="M385 510c95-64 184-67 267-10"/>
+    <path d="M1170 515c83-57 165-61 241-13"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "name": "怕恰狗小窩",
+  "short_name": "怕恰狗小窩",
+  "description": "ViVi 的陪伴聊天小窩",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#b9dcf6",
+  "theme_color": "#a9d1f0",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "assets/app-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/app-icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
