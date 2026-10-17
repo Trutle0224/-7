@@ -84,7 +84,7 @@ function wantsImage(text) {
   const request = /(?:幫我|請幫我|請|可以幫我|我要|我想要|我想|希望)\s*(?:生成|畫|繪製|製作|做)\s*(?:一張|一個|一幅)?/u;
   const explicit = /(?:生成|畫|繪製|製作|做)\s*(?:一張|一個|一幅)\s*(?:圖片|圖像|照片|插圖|桌布|頭像)?/u;
   const photoRequest = /(?:幫我拍一張照片|幫我拍照|拍一張照片|拍照|自拍|想看看你現在的樣子|讓我看看你|給我看看你|看看你現在|你的照片|你的自拍|你現在長什麼樣子|真人的樣子|真實樣子|現實中的你|真人照片)/u;
-  return request.test(text) || explicit.test(text) || photoRequest.test(text);
+  return Boolean(referenceImage) || request.test(text) || explicit.test(text) || photoRequest.test(text);
 }
 function imagePrompt(text) {
   if (/(?:自拍|想看看你現在的樣子|讓我看看你|給我看看你|看看你現在|你的照片|你的自拍|你現在長什麼樣子|真人的樣子|真實樣子|現實中的你|真人照片)/u.test(text)) {
@@ -97,7 +97,8 @@ async function generateImage(prompt) {
   try { const result = desktop ? await desktop.generateImage(imagePrompt(prompt.trim()), referenceImage) : await webImage(imagePrompt(prompt.trim()), referenceImage); addGeneratedImage(result, prompt.trim()); }
   catch (error) { addMessage(`圖片生成遇到一點問題：${error.message || '請稍後再試。'}`); }
 }
-document.querySelector('#referenceImage').addEventListener('change', event => { const file = event.target.files?.[0]; const status = document.querySelector('#referenceStatus'); if (!file) return; if (!file.type.startsWith('image/')) { status.textContent = '請選擇圖片檔案。'; event.target.value = ''; return; } if (file.size > 8 * 1024 * 1024) { status.textContent = '參考圖片請小於 8MB。'; event.target.value = ''; return; } const reader = new FileReader(); reader.onload = () => { referenceImage = String(reader.result || ''); status.textContent = `已選擇參考圖：${file.name}`; }; reader.readAsDataURL(file); });
+document.querySelector('#referenceImage').addEventListener('change', event => { const file = event.target.files?.[0]; const status = document.querySelector('#referenceStatus'); const previewWrap = document.querySelector('#referencePreviewWrap'); const preview = document.querySelector('#referencePreview'); if (!file) return; if (!file.type.startsWith('image/')) { status.textContent = '請選擇圖片檔案。'; event.target.value = ''; return; } if (file.size > 12 * 1024 * 1024) { status.textContent = '參考圖片請小於 12MB。'; event.target.value = ''; return; } const reader = new FileReader(); reader.onload = () => { const source = new Image(); source.onload = () => { const max = 1600; const scale = Math.min(1, max / Math.max(source.naturalWidth, source.naturalHeight)); const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(source.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(source.naturalHeight * scale)); canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height); referenceImage = canvas.toDataURL('image/jpeg', 0.86); preview.src = referenceImage; previewWrap.hidden = false; status.textContent = `已選擇參考圖：${file.name}，下一次送出會直接使用它。`; }; source.src = String(reader.result || ''); }; reader.readAsDataURL(file); });
+document.querySelector('#clearReference').addEventListener('click', () => { referenceImage = ''; document.querySelector('#referenceImage').value = ''; document.querySelector('#referencePreview').removeAttribute('src'); document.querySelector('#referencePreviewWrap').hidden = true; document.querySelector('#referenceStatus').textContent = ''; });
 function saveConversation() { localStorage.setItem(conversationStorageKey, JSON.stringify(conversation.slice(-100))); }
 function setSyncNote(text, error = false) { const note = document.querySelector('#syncNote'); note.textContent = text; note.style.color = error ? '#e58f9d' : '#8ed7b0'; }
 function readSyncCode() { syncCode = document.querySelector('#syncCode').value.trim(); if (syncCode) localStorage.setItem(syncCodeStorageKey, syncCode); else localStorage.removeItem(syncCodeStorageKey); return syncCode; }
